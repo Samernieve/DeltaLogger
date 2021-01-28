@@ -9,7 +9,6 @@ import java.util.UUID;
 import com.github.fabricservertools.deltalogger.QueueOperation;
 import com.github.fabricservertools.deltalogger.SQLUtils;
 import com.github.fabricservertools.deltalogger.beans.Placement;
-import com.github.fabricservertools.deltalogger.beans.RollbackPlacement;
 
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
