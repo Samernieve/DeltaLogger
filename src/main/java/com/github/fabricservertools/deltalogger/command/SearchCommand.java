@@ -54,12 +54,9 @@ public class SearchCommand {
         String sqlPlace = "";
         String sqlContainer = "";
         if (propertyMap.containsKey("target")) {
-            GameProfileArgumentType.GameProfileArgument targets = (GameProfileArgumentType.GameProfileArgument) propertyMap
-                    .get("targets");
-            sqlPlace += "AND player_id = (SELECT  id FROM players WHERE uuid = "
-                    + targets.getNames(scs).stream().map(gp -> gp.getId().toString()).toArray() + ") ";
-            sqlContainer += "AND player_id = (SELECT  id FROM players WHERE uuid = "
-                    + targets.getNames(scs).stream().map(gp -> gp.getId().toString()).toArray() + ") ";
+            GameProfileArgumentType.GameProfileArgument targets = (GameProfileArgumentType.GameProfileArgument)propertyMap.get("targets");
+            sqlPlace += " AND player_id = (SELECT  id FROM players WHERE uuid = "+ targets.getNames(scs).stream().map(gp -> gp.getId().toString()).toArray() + ")";
+            sqlContainer += " AND player_id = (SELECT  id FROM players WHERE uuid = "+ targets.getNames(scs).stream().map(gp -> gp.getId().toString()).toArray()+")";
         }
         if (propertyMap.containsKey("block")) {
             BlockStateArgument block = (BlockStateArgument) propertyMap.get("block");

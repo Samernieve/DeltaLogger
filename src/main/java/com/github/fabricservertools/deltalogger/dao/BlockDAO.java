@@ -1,5 +1,6 @@
 package com.github.fabricservertools.deltalogger.dao;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,6 +9,7 @@ import java.util.UUID;
 import com.github.fabricservertools.deltalogger.QueueOperation;
 import com.github.fabricservertools.deltalogger.SQLUtils;
 import com.github.fabricservertools.deltalogger.beans.Placement;
+import com.github.fabricservertools.deltalogger.beans.RollbackPlacement;
 
 import org.jdbi.v3.core.Handle;
 import org.jdbi.v3.core.Jdbi;
@@ -100,7 +102,7 @@ public class BlockDAO {
       .list()
     );
   }
-  public List<Placement> rollbackQuery(Identifier dimension, BlockPos pos, int idOffset, int limit) {
+  public List<Placement> rollbackQuery(Identifier dimension, BlockPos pos, String time, String criteria) {
     try {
       return jdbi.withHandle(handle -> handle
         .createQuery(
@@ -108,16 +110,14 @@ public class BlockDAO {
             SELECT_PLACEMENT,
             "FROM (",
               "SELECT * FROM placements",
-              "WHERE placements.id < ", SQLUtils.offsetOrZeroLatest("placements", "placements.id", idOffset),
-              "AND x = :x AND y = :y AND z = :z AND dimension_id = (SELECT id FROM registry WHERE `name` = :dim)",
-              "ORDER BY `id` DESC LIMIT :lim",
+              "WHERE x = :x AND y = :y AND z = :z AND dimension_id = (SELECT id FROM registry WHERE name = :dim) "/*AND date < \""+time+"\""*/,
+              "ORDER BY `id` DESC LIMIT 100000",
             ") as PL",
             JOIN_PLACEMENT
           )
         )
         .bind("x", pos.getX()).bind("y", pos.getY()).bind("z", pos.getZ())
         .bind("dim", dimension.toString())
-        .bind("lim", limit)
         .mapTo(Placement.class).list()
       );
     } catch (Exception e) {
@@ -140,7 +140,6 @@ public class BlockDAO {
             SELECT_PLACEMENT,
             "FROM (",
               "SELECT * FROM placements",
-              "WHERE placements.id < ", SQLUtils.offsetOrZeroLatest("placements", "placements.id", idOffset),
               "AND x = :x AND y = :y AND z = :z AND dimension_id = (SELECT id FROM registry WHERE `name` = :dim)",
               "ORDER BY `id` DESC LIMIT :lim",
             ") as PL",

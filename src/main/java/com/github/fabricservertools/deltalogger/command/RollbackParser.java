@@ -16,6 +16,10 @@ import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.GameProfileArgumentType;
 import net.minecraft.command.argument.TimeArgumentType;
 import net.minecraft.server.command.ServerCommandSource;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.LiteralText;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Util;
 
 import java.util.HashMap;
 import java.util.Set;
@@ -32,9 +36,7 @@ public class RollbackParser implements SuggestionProvider<ServerCommandSource> {
     }
 
     private RollbackParser() {
-        criteriumSuggestors.put("action", new Suggestor(new ActionSuggestionProvider()));
-        criteriumSuggestors.put("targets", new Suggestor(GameProfileArgumentType.gameProfile()));
-        criteriumSuggestors.put("radius", new Suggestor(IntegerArgumentType.integer()));
+        criteriumSuggestors.put("target", new Suggestor(GameProfileArgumentType.gameProfile()));
         
         this.criteria = criteriumSuggestors.keySet();
     }
@@ -111,11 +113,6 @@ public class RollbackParser implements SuggestionProvider<ServerCommandSource> {
         private SuggestionProvider<ServerCommandSource> suggestionProvider;
         private ArgumentType argumentType;
 
-        public Suggestor(SuggestionProvider<ServerCommandSource> suggestionProvider) {
-            this.suggestionProvider = suggestionProvider;
-            this.useSuggestionProvider = true;
-        }
-
         public Suggestor(ArgumentType argumentType) {
             this.argumentType = argumentType;
         }
@@ -161,5 +158,21 @@ public class RollbackParser implements SuggestionProvider<ServerCommandSource> {
                 return this.argumentType.parse(reader);
             }
         }
+    }
+    public static String criteria (String criteria, ServerPlayerEntity player, ServerCommandSource scs) {
+        try {
+            HashMap<String, Object> propertyMap = RollbackParser.getInstance().rawProperties(criteria);
+            String query = "";
+            if(propertyMap.containsKey("target")) {
+                GameProfileArgumentType.GameProfileArgument targets = (GameProfileArgumentType.GameProfileArgument)propertyMap.get("target");
+                query += " AND player_id = (SELECT  id FROM players WHERE uuid = "+ targets.getNames(scs).stream().map(gp -> gp.getId().toString()).toArray() + ")";
+                System.out.println(query);
+            }
+            return query;
+
+        } catch (CommandSyntaxException e) {
+            player.sendSystemMessage(new LiteralText("Error parsing criteria").formatted(Formatting.RED), Util.NIL_UUID);
+        }
+        return "";
     }
 }
